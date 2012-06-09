@@ -301,3 +301,25 @@ int decode_len_xor_str_in_img(const char *encoded, const char *original, Byte **
   return 1;
 }
 
+void raise_ris_error(int error) {
+  switch (error) {
+    case RIS_IMG_LOAD_ERROR :
+      rb_raise(rb_eRuntimeError, "Failed to Load Image");  
+      break;
+    
+    case RIS_IMG_SAVE_ERROR :
+      rb_raise(rb_eRuntimeError, "Failed to Save Image");  
+      break;
+    
+    case RIS_IMG_LEN_ERROR :
+      rb_raise(rb_eRuntimeError, "String doesn't fit into Image");  
+      break;
+    
+    case RIS_IMG_LEN_ERROR :
+      rb_raise(rb_eRuntimeError, "Images haveing different length");  
+      break;
+
+    default :
+      rb_raise(rb_eRuntimeError, "RIS default Error");  
+  }
+}
