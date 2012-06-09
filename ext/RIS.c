@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <IL/il.h>
+#include "ris.h"
 
 
 
@@ -45,7 +46,7 @@ static VALUE ris_encode(VALUE self, VALUE img_path, VALUE str, VALUE xor) {
   const char *c_img_path = rb_string_value_ptr(&img_path);
   Byte *c_str = (Byte *) rb_string_value_ptr(&str);
   
-  if (Type(xor) == T_TRUE) {
+  if (TYPE(xor) == T_TRUE) {
     int errcode = encode_len_xor_str_in_img(c_img_path, c_str, str_len);
     if (errcode != 1) raise_ris_error(errcode);
   } else {
@@ -74,7 +75,7 @@ static VALUE ris_encode_raw(VALUE self, VALUE img_path, VALUE str, VALUE xor) {
   const char *c_img_path = rb_string_value_ptr(&img_path);
   Byte *c_str = (Byte *) rb_string_value_ptr(&str);
   
-  if (Type(xor) == T_TRUE) {
+  if (TYPE(xor) == T_TRUE) {
     int errcode = encode_xor_str_in_img(c_img_path, c_str, str_len);
     if (errcode != 1) raise_ris_error(errcode);
   } else {
@@ -100,16 +101,16 @@ static VALUE ris_encode_raw(VALUE self, VALUE img_path, VALUE str, VALUE xor) {
  *
  *  using the first 32 Byte of the image to detect the length of str
  */
-static VALUE ris_decode(VALUE self, VALUE args);
+static VALUE ris_decode(VALUE self, VALUE args) {
   if(RARRAY_LEN(args) > 2)
     rb_raise(rb_eArgError, "to many argumens: expected 1..2");  
   
   if(RARRAY_LEN(args) < 1)
     rb_raise(rb_eArgError, "to few argumens: expected 1..2");  
 
-  VALUE path1 = rb_ary_entry(param, 0);
+  VALUE path1 = rb_ary_entry(args, 0);
   if(TYPE(path1) != T_STRING)
-    rb_raise(rb_eTypeError, "wrong Parameters: expected String");
+    rb_raise(rb_eTypeError, "wrong Parameter 1: expected String");
   
   const char *c_path1 = rb_string_value_ptr(&path1);
   Byte *str;
@@ -119,14 +120,14 @@ static VALUE ris_decode(VALUE self, VALUE args);
     int errcode = decode_len_str_in_img(c_path1, &str, &len);
     if (errcode != 1) raise_ris_error(errcode);
 
-  else {
-    VALUE path2 = rb_ary_entry(param, 2);
+  } else {
+    VALUE path2 = rb_ary_entry(args, 1);
     if(TYPE(path2) != T_STRING)
-      rb_raise(rb_eTypeError, "wrong Parameters: expected String");
+      rb_raise(rb_eTypeError, "wrong Parameter 2: expected String");
 
     const char *c_path2 = rb_string_value_ptr(&path2);
 
-    int errcode = decode_len_xor_str_in_img(path1, path2, &str, &len);
+    int errcode = decode_len_xor_str_in_img(c_path1, c_path2, &str, &len);
     if (errcode != 1) raise_ris_error(errcode);
   }
 
@@ -148,33 +149,33 @@ static VALUE ris_decode(VALUE self, VALUE args);
  *
  * decodes the whole image data without hiding extra data
  */
-static VALUE ris_decode_raw(VALUE self, VALUE args);
+static VALUE ris_decode_raw(VALUE self, VALUE args) {
   if(RARRAY_LEN(args) > 2)
     rb_raise(rb_eArgError, "to many argumens: expected 1..2");  
   
   if(RARRAY_LEN(args) < 1)
     rb_raise(rb_eArgError, "to few argumens: expected 1..2");  
 
-  VALUE path1 = rb_ary_entry(param, 0);
+  VALUE path1 = rb_ary_entry(args, 0);
   if(TYPE(path1) != T_STRING)
     rb_raise(rb_eTypeError, "wrong Parameters: expected String");
   
   const char *c_path1 = rb_string_value_ptr(&path1);
   Byte *str;
-  u_int32_t len;
+  u_int64_t len;
 
   if (RARRAY_LEN(args) == 1) {
     int errcode = decode_str_in_img(c_path1, &str, &len);
     if (errcode != 1) raise_ris_error(errcode);
 
-  else {
-    VALUE path2 = rb_ary_entry(param, 2);
+  } else {
+    VALUE path2 = rb_ary_entry(args, 2);
     if(TYPE(path2) != T_STRING)
       rb_raise(rb_eTypeError, "wrong Parameters: expected String");
 
     const char *c_path2 = rb_string_value_ptr(&path2);
 
-    int errcode = decode_xor_str_in_img(path1, path2, &str, &len);
+    int errcode = decode_xor_str_in_img(c_path1, c_path2, &str, &len);
     if (errcode != 1) raise_ris_error(errcode);
   }
 
