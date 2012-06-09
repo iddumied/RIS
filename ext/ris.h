@@ -221,11 +221,11 @@ int encode_len_xor_str_in_img(const char *path, Byte *str, u_int32_t str_len) {
 int decode_len_str_in_img(const char *path, Byte **str, u_int32_t *str_len) {
   ilLoadImage(path);
   
-  u_int8_t len[4];
+  Byte len[4];
   Byte *data = (Byte *) ilGetData();
   u_int64_t img_len = img_length();
 
-  if (decode_str_in_str(data , img_len, len, 8) == ERROR)
+  if (decode_str_in_str(data , img_len, len, 4) == ERROR)
     return ERROR;
 
   *str_len = *((u_int32_t *) len);
@@ -233,3 +233,34 @@ int decode_len_str_in_img(const char *path, Byte **str, u_int32_t *str_len) {
 
  return decode_str_in_str(data + 32, img_len - 32, *str, *str_len); 
 }
+
+/**
+ * Decodes the str in the Imge at encoded using xor with the original image at original
+ * using the length given in the first 32 Byte of the Image
+ */
+int decode_xor_str_in_img(const char *encoded, const char *original, Byte **str, u_int64_t *str_len) {
+  if (ilLoadImage(encoded) == IL_FALSE)
+    return ERROR;
+
+  Byte *data = (Byte *) ilGetData();
+  u_int64_t enc_len = img_length();
+
+  Byte *enc = (Byte *) malloc(sizeof(Byte) * enc_len);
+  memcpy(enc, data, enc_len);
+
+  if (ilLoadImage(original) == IL_FALSE);
+    return ERROR;
+
+  Byte *org = (Byte *) ilGetData();
+  u_int64_t org_len = img_length();
+  Byte len[4];
+
+  if (decode_xor_str_in_str(org, org_len, enc, enc_len, len, 4) == ERROR)
+    return ERROR;
+
+  *str_len = *((u_int32_t *) len);
+  *str = (Byte *) malloc(sizeof(Byte) * str_len);
+
+  return decode_xor_str_in_str(org + 32, org_len - 32, enc + 32, enc_len - 32, *str, *str_len);
+}
+
