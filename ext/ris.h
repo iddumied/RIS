@@ -101,9 +101,8 @@ int encode_str_in_img(const char *path, Byte *str, u_int64_t str_len) {
     return ERROR;
 
   char img_save_path[256];
-  strcpy (str, path);
-  strcat (str, ".enc.");
-  strcat (str, ".png");
+  strcpy ((char *) img_save_path, path);
+  strcat ((char *) img_save_path, ".enc.png");
 
   return ilSaveImage(img_save_path);
 }
@@ -117,9 +116,8 @@ int encode_xor_str_in_img(const char *path, Byte *str, u_int64_t str_len) {
     return ERROR;
 
   char img_save_path[256];
-  strcpy (str, path);
-  strcat (str, ".enc.xor.");
-  strcat (str, ".png");
+  strcpy ((char *) img_save_path, path);
+  strcat ((char *) img_save_path, ".enc.xor.png");
 
   return ilSaveImage(img_save_path);
 }
@@ -129,8 +127,8 @@ int encode_xor_str_in_img(const char *path, Byte *str, u_int64_t str_len) {
  */
 int decode_str_in_img(const char *path, Byte **str, u_int64_t *str_len) {
   ilLoadImage(path);
-  *str_len = img_length() / 8;
-  *str = (Byte *) malloc(sizeof(Byte) * *str_len);
+  *str_len = (img_length() / 8);
+  *str = (Byte *) malloc((size_t) *str_len);
 
   return decode_str_in_str((Byte *) ilGetData(), img_length(), *str, *str_len);
 }
@@ -139,23 +137,27 @@ int decode_str_in_img(const char *path, Byte **str, u_int64_t *str_len) {
  * Decodes the str in the Imge at encoded using xor with the original image at original
  */
 int decode_xor_str_in_img(const char *encoded, const char *original, Byte **str, u_int64_t *str_len) {
-  if (ilLoadImage(encoded) == IL_FALSE)
+  if (ilLoadImage(encoded) == IL_FALSE) {
+    printf("[DEBUG] couldent open %s\n", encoded);
     return ERROR;
+  }
 
   Byte *data = (Byte *) ilGetData();
   u_int64_t enc_len = img_length();
 
-  Byte *enc = (Byte *) malloc(sizeof(Byte) * enc_len);
-  memcpy(enc, data, enc_len);
+  Byte *enc = (Byte *) malloc((size_t) enc_len);
+  memcpy(enc, data, (size_t) enc_len);
 
-  if (ilLoadImage(original) == IL_FALSE);
+  if (ilLoadImage(original) == IL_FALSE) {
+    printf("[DEBUG] couldent open %s\n", original);
     return ERROR;
+  }
 
   Byte *org = (Byte *) ilGetData();
   u_int64_t org_len = img_length();
 
   *str_len = img_length() / 8;
-  *str = (Byte *) malloc(sizeof(Byte) * *str_len);
+  *str = (Byte *) malloc((size_t) *str_len);
 
   return decode_xor_str_in_str(org, org_len, enc, enc_len, *str, *str_len);
 }
@@ -169,10 +171,10 @@ int encode_len_str_in_img(const char *path, Byte *str, u_int32_t str_len) {
 
   Byte *data = (Byte *) ilGetData();
   u_int64_t img_len = img_length();
-  Byte len[4] = (Byte *) &str_len;
+  Byte *len = (Byte *) &str_len;
 
   // encode the length
-  if (encode_str_in_img(data, img_len, len, 4) == ERROR)
+  if (encode_str_in_str(data, img_len, len, 4) == ERROR)
     return ERROR;
 
   // encode the string
@@ -180,9 +182,8 @@ int encode_len_str_in_img(const char *path, Byte *str, u_int32_t str_len) {
     return ERROR;
 
   char img_save_path[256];
-  strcpy (str, path);
-  strcat (str, ".enc.");
-  strcat (str, ".png");
+  strcpy ((char *) img_save_path, path);
+  strcat ((char *) img_save_path, ".enc.len.png");
 
   return ilSaveImage(img_save_path);
 }
@@ -196,10 +197,10 @@ int encode_len_xor_str_in_img(const char *path, Byte *str, u_int32_t str_len) {
 
   Byte *data = (Byte *) ilGetData();
   u_int64_t img_len = img_length();
-  Byte len[4] = (Byte *) &str_len;
+  Byte *len = (Byte *) &str_len;
 
   // encode the length
-  if (encode_xor_str_in_img(data, img_len, len, 4) == ERROR)
+  if (encode_xor_str_in_str(data, img_len, len, 4) == ERROR)
     return ERROR;
 
   // encode the string
@@ -207,9 +208,8 @@ int encode_len_xor_str_in_img(const char *path, Byte *str, u_int32_t str_len) {
     return ERROR;
 
   char img_save_path[256];
-  strcpy (str, path);
-  strcat (str, ".enc.");
-  strcat (str, ".png");
+  strcpy ((char *) img_save_path, path);
+  strcat ((char *) img_save_path, ".enc.len.xor.png");
 
   return ilSaveImage(img_save_path);
 }
@@ -229,7 +229,7 @@ int decode_len_str_in_img(const char *path, Byte **str, u_int32_t *str_len) {
     return ERROR;
 
   *str_len = *((u_int32_t *) len);
-  *str = (Byte *) malloc(sizeof(Byte) * str_len);
+  *str = (Byte *) malloc((size_t) *str_len);
 
  return decode_str_in_str(data + 32, img_len - 32, *str, *str_len); 
 }
@@ -238,18 +238,22 @@ int decode_len_str_in_img(const char *path, Byte **str, u_int32_t *str_len) {
  * Decodes the str in the Imge at encoded using xor with the original image at original
  * using the length given in the first 32 Byte of the Image
  */
-int decode_xor_str_in_img(const char *encoded, const char *original, Byte **str, u_int64_t *str_len) {
-  if (ilLoadImage(encoded) == IL_FALSE)
+int decode_len_xor_str_in_img(const char *encoded, const char *original, Byte **str, u_int32_t *str_len) {
+  if (ilLoadImage(encoded) == IL_FALSE) {
+    printf("[DEBUG] couldent open %s\n", encoded);
     return ERROR;
+  }
 
   Byte *data = (Byte *) ilGetData();
   u_int64_t enc_len = img_length();
 
-  Byte *enc = (Byte *) malloc(sizeof(Byte) * enc_len);
-  memcpy(enc, data, enc_len);
+  Byte *enc = (Byte *) malloc((size_t) enc_len);
+  memcpy(enc, data, (size_t) enc_len);
 
-  if (ilLoadImage(original) == IL_FALSE);
+  if (ilLoadImage(original) == IL_FALSE) {
+    printf("[DEBUG] couldent open %s\n", original);
     return ERROR;
+  }
 
   Byte *org = (Byte *) ilGetData();
   u_int64_t org_len = img_length();
@@ -259,7 +263,7 @@ int decode_xor_str_in_img(const char *encoded, const char *original, Byte **str,
     return ERROR;
 
   *str_len = *((u_int32_t *) len);
-  *str = (Byte *) malloc(sizeof(Byte) * str_len);
+  *str = (Byte *) malloc((size_t) *str_len);
 
   return decode_xor_str_in_str(org + 32, org_len - 32, enc + 32, enc_len - 32, *str, *str_len);
 }
